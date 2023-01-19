@@ -1,9 +1,8 @@
-﻿namespace CoolParking.BL.Interfaces
+﻿namespace CoolParking.BL.Interfaces;
+
+public interface ILogService
 {
-    public interface ILogService
-    {
-        string LogPath { get; }
-        void Write(string logInfo);
-        string Read();
-    }
+    string LogPath { get; }
+    void Write(string logInfo);
+    string Read();
 }
