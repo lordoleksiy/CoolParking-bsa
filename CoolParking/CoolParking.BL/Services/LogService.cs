@@ -42,6 +42,7 @@ public class LogService : ILogService
 
     public void Write(string logInfo)
     {
+        if (logInfo.Length < 1) return;
         using (var file = new StreamWriter(LogPath, true))
         {
             file.WriteLine(logInfo);

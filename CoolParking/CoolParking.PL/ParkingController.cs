@@ -12,7 +12,6 @@ public class ParkingController
     private ITimerService widthdrawTimer;
     private ITimerService logTimer;
     private ParkingService _parkingService;
-    private CommandController _commandController;
     private bool isOpen = true;
 
     public ParkingController()
@@ -21,16 +20,15 @@ public class ParkingController
         widthdrawTimer = new TimerService();
         logTimer = new TimerService();
         _parkingService = new(widthdrawTimer, logTimer, logService);
-        _commandController = new CommandController();
     }
 
     public void Start()
     {
-        _commandController.Hello();
+        Hello();
         
         while (isOpen)
         {  
-            string command = _commandController.getCommand();
+            string command = getCommand();
             switch (command)
             {
                 case "/balance":
@@ -61,7 +59,7 @@ public class ParkingController
                     TakeOut();
                     break;
                 case "/help":
-                    _commandController.Info();
+                    Info();
                     break;
                 case "/exit":
                     isOpen = false;
@@ -85,15 +83,17 @@ public class ParkingController
         Console.WriteLine("Vehicles: ");
         foreach ( var vehicle in vehicles )
         {
-            _commandController.PrintVehicle(vehicle);
+            PrintVehicle(vehicle);
         }
     }
     private void AddVehicle()
     {
-        var dataVehicle = _commandController.parseVehicle();
         VehicleType type;
         decimal balance;
-        switch (dataVehicle.VehicleType)
+        Console.Write("Choose type of your vehicle (PassengerCar,\r\n    Truck,\r\n    Bus,\r\n    Motorcycle): ");
+        var typestr = Console.ReadLine();
+
+        switch (typestr)
         {
             case "PassengerCar":
                 type = VehicleType.PassengerCar; break;
@@ -107,7 +107,11 @@ public class ParkingController
                 Console.WriteLine("No such type of vehicle");
                 return;
         }
-        if (!decimal.TryParse(dataVehicle.Balance, out balance))
+
+        Console.Write("Enter balance for your vehicle: ");
+        var balancestr = Console.ReadLine();
+        
+        if (!decimal.TryParse(balancestr, out balance))
         {
             Console.WriteLine("Error while parsing balance");
             return;
@@ -117,7 +121,7 @@ public class ParkingController
             var vehicle = new Vehicle(Vehicle.GenerateRandomRegistrationPlateNumber(), type, balance);
             _parkingService.AddVehicle(vehicle);
             Console.Write("Your vehicle: ");
-            _commandController.PrintVehicle(vehicle);
+            PrintVehicle(vehicle);
         }
         catch (Exception ex)
         {
@@ -179,5 +183,37 @@ public class ParkingController
     private void GetFullBalance()
     {
         Console.WriteLine($"Full balance: {_parkingService.GetBalanceFromFile()}");
+    }
+
+    private void PrintVehicle(Vehicle vehicle)
+    {
+        Console.WriteLine($"{vehicle.Id}: {vehicle.Balance}|{vehicle.VehicleType}");
+    }
+
+    private string getCommand()
+    {
+        Console.Write("Enter here: ");
+        var command = Console.ReadLine();
+        return command;
+    }
+
+    private void Hello()
+    {
+        Console.WriteLine("Welcome to Cool Parking. Enter commands to do some operations.\n" +
+            "To show a list of commands enter /help. To exit enter /exit. ");
+    }
+
+    private void Info()
+    {
+        Console.WriteLine("Choose command from the list:\n\n" +
+            "\t/balance - Parking Balance\n" +
+            "\t/curbalance - Parking balance during current session\n" +
+            "\t/available - Amount of available places\n" +
+            "\t/curtransactions - Parking transactions during session\n" +
+            "\t/history - History of parking transactions\n" +
+            "\t/vehicles - List of vehicles on parking\n" +
+            "\t/add - Add vehicle to parking\n" +
+            "\t/take - Take vehicle from parking\n" +
+            "\t/topup - Top up vehicle balance");
     }
 }

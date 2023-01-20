@@ -156,16 +156,12 @@ public class ParkingService : IParkingService
     private void WriteToFile(Object source, System.Timers.ElapsedEventArgs e)
     {
         string data = "";
-        foreach (var transaction in _parking.Transactions)
+        foreach (var transaction in _parking.Transactions.ToList())
         {
             data += $"{transaction}\n";
         }
-
-
+        data = data.TrimEnd('\n');
         _logService.Write(data);
         _parking.Transactions.Clear();
-        //if (_parking.Transactions.Count > 0){ 
-        //}
-        // writing to file must be surrounded by if to avoid writing of empty strings but test won't pass(((((
     }
 }
