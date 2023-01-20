@@ -1,10 +1,4 @@
-﻿// TODO: implement class Parking.
-//       Implementation details are up to you, they just have to meet the requirements 
-//       of the home task and be consistent with other classes and tests.
-
-using CoolParking.BL.Interfaces;
-using CoolParking.BL.Services;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace CoolParking.BL.Models;
 public class Parking {

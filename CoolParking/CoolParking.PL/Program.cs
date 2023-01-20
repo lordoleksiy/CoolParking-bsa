@@ -8,18 +8,4 @@ using CoolParking.PL;
 
 ParkingController parkingController = new();
 parkingController.Start();
-//try
-//{
-    //Vehicle vehicle = new (Vehicle.GenerateRandomRegistrationPlateNumber(), VehicleType.Truck, 100);
 
-    //parking.AddVehicle(vehicle);
-    //var vehicles = parking.GetVehicles();    
-    //foreach (var v in vehicles)
-    //{
-    //    printVehicle(v);
-    //}
-//}
-//catch (ArgumentException e)
-//{
-//    Console.WriteLine(e.Message);
-//}

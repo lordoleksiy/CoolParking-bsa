@@ -1,7 +1,4 @@
-﻿// TODO: implement class TimerService from the ITimerService interface.
-//       Service have to be just wrapper on System Timers.
-
-using System.Timers;
+﻿using System.Timers;
 using CoolParking.BL.Interfaces;
 
 namespace CoolParking.BL.Services;
@@ -15,7 +12,8 @@ public class TimerService : ITimerService
 
     public void Dispose()
     {
-        Dispose();
+        _timer?.Dispose();
+        this.Dispose();
     }
 
     public void Start()

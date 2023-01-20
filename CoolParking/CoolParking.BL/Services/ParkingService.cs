@@ -1,11 +1,4 @@
-﻿// TODO: implement the ParkingService class from the IParkingService interface.
-//       For try to add a vehicle on full parking InvalidOperationException should be thrown.
-//       For try to remove vehicle with a negative balance (debt) InvalidOperationException should be thrown.
-//       Other validation rules and constructor format went from tests.
-//       Other implementation details are up to you, they just have to match the interface requirements
-//       and tests, for example, in ParkingServiceTests you can find the necessary constructor format and validation rules.
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -49,16 +42,34 @@ public class ParkingService : IParkingService
         if (!disposing)
         {
             disposing = true;
-            this.Dispose();
             _parking.Vehicles.Clear();
             _parking.Transactions.Clear();
             _parking.Balance = 0;
+            _logTimer.Dispose();
+            _withdrawTimer.Dispose();
+            this.Dispose();
         }    
     }
 
     public decimal GetBalance()
     {
         return _parking.Balance;
+    }
+
+    public decimal GetBalanceFromFile()
+    {
+        var amount = _parking.Balance;
+        var text = _logService.Read();
+        if (text.Length == 0) return amount;
+        foreach (var t in text.Split("\n"))
+        {
+            var dataArr = t.Split("|");
+            if (dataArr[0].Equals("Withdraw"))
+            {
+                amount += decimal.Parse(dataArr[1]);
+            }
+        }
+        return amount;
     }
 
     public int GetCapacity()
@@ -73,9 +84,7 @@ public class ParkingService : IParkingService
 
     public TransactionInfo[] GetLastParkingTransactions()
     {
-        var lastTransactions = (from t in _parking.Transactions
-                                select t).Take(5);
-        return lastTransactions.ToArray();
+        return _parking.Transactions.ToArray();
     }
 
     public ReadOnlyCollection<Vehicle> GetVehicles()
@@ -123,7 +132,14 @@ public class ParkingService : IParkingService
             var cost = _parking.Tarrifs[vehicle.VehicleType];
             if (vehicle.Balance - cost < 0)
             {
-                cost = (cost - vehicle.Balance)*_parking.FineCoefficient + vehicle.Balance;
+                if (vehicle.Balance < 0) 
+                {
+                    cost *= _parking.FineCoefficient;
+                }
+                else
+                {
+                    cost = (cost - vehicle.Balance)*_parking.FineCoefficient + vehicle.Balance;
+                }
             }
             var transaction = new TransactionInfo();
             transaction.Sum = cost;
@@ -144,7 +160,12 @@ public class ParkingService : IParkingService
         {
             data += $"{transaction}\n";
         }
+
+
         _logService.Write(data);
         _parking.Transactions.Clear();
+        //if (_parking.Transactions.Count > 0){ 
+        //}
+        // writing to file must be surrounded by if to avoid writing of empty strings but test won't pass(((((
     }
 }

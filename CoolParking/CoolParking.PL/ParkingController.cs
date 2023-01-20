@@ -33,6 +33,12 @@ public class ParkingController
             string command = _commandController.getCommand();
             switch (command)
             {
+                case "/balance":
+                    GetFullBalance();
+                    break;
+                case "/available":
+                    ShowAvailable();
+                    break;
                 case "/history":
                     ShowHistory();
                     break;
@@ -47,6 +53,12 @@ public class ParkingController
                     break;
                 case "/add":
                     AddVehicle();
+                    break;
+                case "/curtransactions":
+                    ShowCurTransactions();
+                    break;
+                case "/take":
+                    TakeOut();
                     break;
                 case "/help":
                     _commandController.Info();
@@ -136,4 +148,36 @@ public class ParkingController
         Console.WriteLine(text);
     }
 
+    private void ShowCurTransactions()
+    {
+        var transactions = _parkingService.GetLastParkingTransactions();
+        Console.WriteLine("Last Transactions:");
+        transactions.ToList().ForEach(a => Console.WriteLine(a));
+    }
+
+    private void ShowAvailable()
+    {
+        var freePlaces = _parkingService.GetFreePlaces();
+        var allCount = _parkingService.GetCapacity();
+        Console.WriteLine($"Available {freePlaces} places of {allCount}");
+    }
+
+    private void TakeOut()
+    {
+        Console.Write("Enter your vehicleId: ");
+        var vehicleId = Console.ReadLine();
+        try
+        {
+            _parkingService.RemoveVehicle(vehicleId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+    private void GetFullBalance()
+    {
+        Console.WriteLine($"Full balance: {_parkingService.GetBalanceFromFile()}");
+    }
 }
