@@ -15,4 +15,6 @@ public interface IParkingService : IDisposable
     void TopUpVehicle(string vehicleId, decimal sum);
     TransactionInfo[] GetLastParkingTransactions();
     string ReadFromLog();
+    decimal GetBalanceFromFile();
+    Vehicle GetVehicle(string vehicleId);
 }

@@ -10,7 +10,7 @@ public class Parking {
     public IDictionary<VehicleType, decimal> Tarrifs { get; }
     public decimal FineCoefficient { get ; }
 
-    public Parking() {
+    private Parking() {
         Vehicles = new List<Vehicle>();
         Transactions = new List<TransactionInfo>();
         Balance = Settings.CurBalance;

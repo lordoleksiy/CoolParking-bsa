@@ -1,26 +1,19 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 using CoolParking.BL.Interfaces;
 using CoolParking.BL.Models;
 using CoolParking.BL.Services;
+using CoolParking.PL.Models;
+using Newtonsoft.Json;
 
 namespace CoolParking.PL;
 
 public class ParkingController
 {
-    private ILogService logService;
-    private ITimerService widthdrawTimer;
-    private ITimerService logTimer;
-    private ParkingService _parkingService;
+    
     private bool isOpen = true;
-
-    public ParkingController()
-    {
-        logService = new LogService($@"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}\Transactions.log");
-        widthdrawTimer = new TimerService();
-        logTimer = new TimerService();
-        _parkingService = new(widthdrawTimer, logTimer, logService);
-    }
+    private readonly Client client = new();
 
     public void Start()
     {
@@ -28,9 +21,12 @@ public class ParkingController
         
         while (isOpen)
         {  
-            string command = getCommand();
+            string command = GetCommand();
             switch (command)
             {
+                case "/get":
+                    GetVehicle();
+                    break;
                 case "/balance":
                     GetFullBalance();
                     break;
@@ -64,28 +60,40 @@ public class ParkingController
                 case "/exit":
                     isOpen = false;
                     break;
+                default:
+                    Console.WriteLine("No such command");
+                    break;
             }
         }
     }
 
+    private void GetVehicle()
+    {
+        Console.Write("Enter vehicle id: ");
+        var id = Console.ReadLine();
+        var res = client.Get<Vehicle>($"vehicles/{id}");
+        Console.WriteLine(res);
+    }
+
     private void GetBalance()
     {
-        Console.WriteLine($"Balance of parking during current session: {_parkingService.GetBalance()}");
+        var res = client.Get<decimal>("parking/balance");
+        Console.WriteLine($"Current parking balance: {res}");
     }
+
     private void ShowVehicles()
     {
-        var vehicles = _parkingService.GetVehicles();
-        if (vehicles.Count == 0)
+        var vehicles = client.Get<IEnumerable<Vehicle>>("vehicles");
+        if (vehicles == null || !vehicles.Any())
         {
-            Console.WriteLine("No vehicles in parking.");
+            Console.WriteLine("No vehicles...");
             return;
         }
-        Console.WriteLine("Vehicles: ");
-        foreach ( var vehicle in vehicles )
-        {
-            PrintVehicle(vehicle);
-        }
+
+        Console.WriteLine("List of vehicles: ");
+        vehicles.ToList().ForEach(v => Console.WriteLine(v));
     }
+
     private void AddVehicle()
     {
         VehicleType type;
@@ -116,17 +124,12 @@ public class ParkingController
             Console.WriteLine("Error while parsing balance");
             return;
         }
-        try
-        {
-            var vehicle = new Vehicle(Vehicle.GenerateRandomRegistrationPlateNumber(), type, balance);
-            _parkingService.AddVehicle(vehicle);
-            Console.Write("Your vehicle: ");
-            PrintVehicle(vehicle);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-        }
+
+        var vehicle = new Vehicle(Vehicle.GenerateRandomRegistrationPlateNumber(), type, balance);
+        var res = client.Post("vehicles", vehicle);
+        Console.Write("Your vehicle: ");
+        Console.WriteLine(res);
+
     }
 
     private void TopUpVehicle()
@@ -135,75 +138,76 @@ public class ParkingController
         var id = Console.ReadLine();
         Console.Write("Enter amount of topup: ");
         var money = Console.ReadLine();
-        try
+
+        if (!decimal.TryParse(money, out decimal amount))
         {
-            _parkingService.TopUpVehicle(id, decimal.Parse(money));
+            Console.WriteLine("Wrong Input!");
+            return;
         }
-        catch (Exception ex)
+        var model = new VehicleViewModel()
         {
-            Console.WriteLine(ex.Message);
-        }
+            Id = id,
+            Balance = amount,
+        };
+   
+        var res = client.Put("transactions/topUpVehicle", model);
+        Console.WriteLine(res);
     }
 
     private void ShowHistory()
     {
-        var text = _parkingService.ReadFromLog();
+        var transactions = client.Get("transactions/all");
         Console.WriteLine("History of transactions:");
-        Console.WriteLine(text);
+        Console.WriteLine(transactions);
     }
 
     private void ShowCurTransactions()
     {
-        var transactions = _parkingService.GetLastParkingTransactions();
+        var transactions = client.Get<IEnumerable<TransactionInfo>>("transactions/last");
+        if (transactions == null || !transactions.Any())
+        {
+            Console.WriteLine("No Transactions...");
+            return;
+        }
         Console.WriteLine("Last Transactions:");
         transactions.ToList().ForEach(a => Console.WriteLine(a));
     }
 
     private void ShowAvailable()
     {
-        var freePlaces = _parkingService.GetFreePlaces();
-        var allCount = _parkingService.GetCapacity();
+        var freePlaces = client.Get<int>("parking/freePlaces");
+        var allCount = client.Get<int>("parking/capacity");
         Console.WriteLine($"Available {freePlaces} places of {allCount}");
     }
 
     private void TakeOut()
     {
-        Console.Write("Enter your vehicleId: ");
-        var vehicleId = Console.ReadLine();
-        try
-        {
-            _parkingService.RemoveVehicle(vehicleId);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-        }
+        Console.Write("Enter Id of vehicle: ");
+        var id = Console.ReadLine();
+        var res = client.Delete($"vehicles/{id}");
+        Console.WriteLine(res);
     }
 
     private void GetFullBalance()
     {
-        Console.WriteLine($"Full balance: {_parkingService.GetBalanceFromFile()}");
+        var res = client.Get<decimal>("parking/fullbalance");
+        Console.WriteLine($"Full balance: {res}");
     }
 
-    private void PrintVehicle(Vehicle vehicle)
-    {
-        Console.WriteLine($"{vehicle.Id}: {vehicle.Balance}|{vehicle.VehicleType}");
-    }
-
-    private string getCommand()
+    private static string GetCommand()
     {
         Console.Write("Enter here: ");
         var command = Console.ReadLine();
-        return command;
+        return command!;
     }
 
-    private void Hello()
+    private static void Hello()
     {
         Console.WriteLine("Welcome to Cool Parking. Enter commands to do some operations.\n" +
             "To show a list of commands enter /help. To exit enter /exit. ");
     }
 
-    private void Info()
+    private static void Info()
     {
         Console.WriteLine("Choose command from the list:\n\n" +
             "\t/balance - Parking Balance\n" +
@@ -214,6 +218,7 @@ public class ParkingController
             "\t/vehicles - List of vehicles on parking\n" +
             "\t/add - Add vehicle to parking\n" +
             "\t/take - Take vehicle from parking\n" +
-            "\t/topup - Top up vehicle balance");
+            "\t/topup - Top up vehicle balance\n" +
+            "\t/get - Get a single vehicle by id");
     }
 }

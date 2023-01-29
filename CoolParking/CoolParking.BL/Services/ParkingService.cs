@@ -60,7 +60,7 @@ public class ParkingService : IParkingService
     {
         var amount = _parking.Balance;
         var text = _logService.Read();
-        if (text.Length == 0) return amount;
+        if (text == null || text.Length == 0) return amount;
         foreach (var t in text.Split("\n"))
         {
             var dataArr = t.Split("|");
@@ -101,10 +101,17 @@ public class ParkingService : IParkingService
 
     public void RemoveVehicle(string vehicleId)
     {
-        var vehicle = _parking.Vehicles.Where(a => a.Id.Equals(vehicleId)).FirstOrDefault();
+        var vehicle = _parking.Vehicles.FirstOrDefault(a => a.Id.Equals(vehicleId));
         if (vehicle == null) throw new ArgumentException("No such vehicle");
         if (vehicle.Balance < 0) throw new InvalidOperationException("Balnce is less than zero");
         _parking.Vehicles.Remove(vehicle);
+    }
+
+    public Vehicle GetVehicle(string vehicleId)
+    {
+        var vehicle = _parking.Vehicles.FirstOrDefault(a => a.Id.Equals(vehicleId));
+        if (vehicle == null) throw new ArgumentException("No such vehicle");
+        return vehicle;
     }
 
     public void TopUpVehicle(string vehicleId, decimal sum)
@@ -118,7 +125,10 @@ public class ParkingService : IParkingService
             transaction.VehicleId = vehicleId;
             transaction.Type = "User topUp";
 
-            _parking.Transactions.Add(transaction);
+            lock (_parking.Transactions)
+            {
+                _parking.Transactions.Add(transaction);
+            }
             vehicle.Balance += sum;
             return;
         }
@@ -147,7 +157,10 @@ public class ParkingService : IParkingService
             transaction.VehicleId = vehicle.Id;
             transaction.Type = "Withdraw";
 
-            _parking.Transactions.Add(transaction);
+            lock (_parking.Transactions) 
+            {
+                _parking.Transactions.Add(transaction);
+            }
             vehicle.Balance -= cost;
             _parking.Balance += cost;
         }
@@ -156,12 +169,15 @@ public class ParkingService : IParkingService
     private void WriteToFile(Object source, System.Timers.ElapsedEventArgs e)
     {
         string data = "";
-        foreach (var transaction in _parking.Transactions.ToList())
+        lock (_parking.Transactions)
         {
-            data += $"{transaction}\n";
+            foreach (var transaction in _parking.Transactions.ToList())
+            {
+                data += $"{transaction}\n";
+            }
+            _parking.Transactions.Clear();
         }
-        data = data.TrimEnd('\n');
-        _logService.Write(data);
-        _parking.Transactions.Clear();
+            data = data.TrimEnd('\n');
+            _logService.Write(data);
     }
 }

@@ -12,6 +12,7 @@ public class Vehicle
     [RegularExpression(@"[A-Z]{2}-\d{4}-[A-Z]{2}", ErrorMessage = "Incorrect id")]
     public string Id { get; }
 
+    [EnumDataType(typeof(VehicleType))]
     public VehicleType VehicleType { get; }
 
     [Range(0, double.MaxValue)]
@@ -19,15 +20,24 @@ public class Vehicle
 
     public Vehicle(string Id, VehicleType VehicleType, decimal Balance)
     {
-        this.Id = Id;
+        this.Id = Id; 
         this.VehicleType = VehicleType;
-        this.Balance = Balance;
+        this.Balance = Balance;  
+    }
 
+    public Boolean IsValid()
+    {
         var results = new List<ValidationResult>();
         var context = new ValidationContext(this);
 
         if (!Validator.TryValidateObject(this, context, results, true))
-            throw new ArgumentException("Validation error");
+            return false;
+        return true;
+    }
+
+    public override string ToString()
+    {
+        return $"{Id}: {VehicleType.ToString()} | {Balance}";
     }
 
     public static string GenerateRandomRegistrationPlateNumber()
