@@ -2,6 +2,7 @@
 using CoolParking.BL.Interfaces;
 using CoolParking.BL.Models;
 using CoolParking.WebAPI.Infrastructure;
+using CoolParking.WebAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CoolParking.WebAPI.Controllers;
@@ -18,17 +19,17 @@ public class VehiclesController: ControllerBase
     }
 
     [HttpGet]
-    public IEnumerable<Vehicle> GetAll() =>_parkingService.GetVehicles();
+    public IEnumerable<VehicleDTO> GetAll() => new MyAutoMapper<Vehicle, VehicleDTO>().Map<IEnumerable<Vehicle>, IEnumerable<VehicleDTO>>(_parkingService.GetVehicles());
 
     [HttpGet("{id}")]
-    public ActionResult<Vehicle> GetVehicle(string id)
+    public ActionResult<VehicleDTO> GetVehicle(string id)
     {
-        if (!Regex.IsMatch(id, @"[A-Z]{2}-\d{4}-[A-Z]{2}"))
+        if (!IsValidId(id))
             return BadRequest("Invalid id");
 
         try
         {
-            var vehicle = _parkingService.GetVehicle(id);
+            var vehicle = new MyAutoMapper<Vehicle, VehicleDTO>().Map(_parkingService.GetVehicle(id));
             return Ok(vehicle);
         }
         catch (Exception ex)
@@ -38,25 +39,24 @@ public class VehiclesController: ControllerBase
     }
 
     [HttpPost]
-    public ActionResult<Vehicle> PostVehicle([FromBody]Vehicle vehicle)
+    public ActionResult<VehicleDTO> PostVehicle([FromBody]VehicleDTO vehicleDTO)
     {
-        if (vehicle == null || !vehicle.IsValid())
-            return BadRequest("Invalid body of request");
         try
         {
+            var vehicle = new MyAutoMapper<VehicleDTO, Vehicle>().Map(vehicleDTO);
             _parkingService.AddVehicle(vehicle);
+            return Created($"vehicles/{vehicle.Id}", vehicleDTO);
         }
         catch (Exception ex)
         {
             return BadRequest(ex.Message);
         }
-        return Created($"vehicles/{vehicle.Id}", vehicle);
     }
 
     [HttpDelete("{id}")]
     public ActionResult DeleteVehicle(string id)
     {
-        if (!Regex.IsMatch(id, @"[A-Z]{2}-\d{4}-[A-Z]{2}"))
+        if (!IsValidId(id))
             return BadRequest("Invalid id");
 
         try
@@ -68,6 +68,15 @@ public class VehiclesController: ControllerBase
             return BadRequest(ex.Message);
         }
         return StatusCode(204);
+    }
+
+    private static bool IsValidId(string id)
+    {
+        if (Regex.IsMatch(id, @"[A-Z]{2}-\d{4}-[A-Z]{2}"))
+        {
+            return true;
+        }
+        return false;
     }
 
 }

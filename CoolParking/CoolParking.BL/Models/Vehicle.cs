@@ -22,7 +22,11 @@ public class Vehicle
     {
         this.Id = Id; 
         this.VehicleType = VehicleType;
-        this.Balance = Balance;  
+        this.Balance = Balance;
+        if (!IsValid())
+        {
+            throw new ValidationException("Vehicle is not valid");
+        }
     }
 
     public Boolean IsValid()

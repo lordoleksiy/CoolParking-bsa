@@ -1,7 +1,9 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
 using CoolParking.BL.Interfaces;
 using CoolParking.BL.Models;
 using CoolParking.WebAPI.Infrastructure;
+using CoolParking.WebAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CoolParking.WebAPI.Controllers;
@@ -17,10 +19,10 @@ public class TransactionsController: ControllerBase
     }
 
     [HttpGet("last")]
-    public ActionResult<TransactionInfo[]> GetLast() => Ok(_parkingService.GetLastParkingTransactions());
+    public ActionResult<TransactionInfoDTO[]> GetLast() => Ok(new MyAutoMapper<TransactionInfo, TransactionInfoDTO>().Map<TransactionInfo[], TransactionInfoDTO[]>(_parkingService.GetLastParkingTransactions()));
 
     [HttpGet("all")]
-    public ActionResult<TransactionInfo[]> GetAll() 
+    public ActionResult<string> GetAll() 
     {
         try
         {
@@ -34,15 +36,17 @@ public class TransactionsController: ControllerBase
     }
 
     [HttpPut("topUpVehicle")]
-    public ActionResult<Vehicle> TopUp([FromBody]Vehicle? vehicle)
+    public ActionResult<VehicleDTO> TopUp([FromBody]VehicleDTO vehicleDTO)
     {
-        if (vehicle == null || !vehicle.IsValid())
-            return BadRequest("Invalid body of request");
-
         try
         {
+            var vehicle = new MyAutoMapper<VehicleDTO, Vehicle>().Map(vehicleDTO);
             _parkingService.TopUpVehicle(vehicle.Id, vehicle.Balance);
-            return Ok(_parkingService.GetVehicle(vehicle.Id));
+            return Ok(new MyAutoMapper<Vehicle, VehicleDTO>().Map(_parkingService.GetVehicle(vehicle.Id)));
+        }
+        catch (ValidationException ex)
+        {
+            return BadRequest(ex.Message);
         }
         catch (Exception ex)
         {
