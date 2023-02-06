@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CoolParking.BL\CoolParking.BL.csproj" />
+    <ProjectReference Include="..\CoolParking.WebAPI\CoolParking.WebAPI.csproj" />
   </ItemGroup>
 
 </Project>

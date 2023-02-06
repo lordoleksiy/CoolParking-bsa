@@ -9,7 +9,7 @@ public class Program{
         var builder = WebApplication.CreateBuilder(args);
 
         builder.Services.AddConfig(builder.Configuration);
-        //builder.Services.AddMyDependencyGroup();  //won't work because of concrete params in constructors
+        builder.Services.AddMyDependencyGroup();  //won't work because of concrete params in constructors
 
         var app = builder.Build();
 

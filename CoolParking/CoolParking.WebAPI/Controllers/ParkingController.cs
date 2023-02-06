@@ -14,10 +14,11 @@ namespace CoolParking.WebAPI.Controllers;
 public class ParkingController: ControllerBase
 {
     private readonly IParkingService _parkingService;
-    public ParkingController()
+    public ParkingController(IParkingService service)
     {
-        _parkingService = Data.ParkingService;
+        _parkingService = service;
     }
+
 
     [HttpGet("balance")] // api/balance
     public ActionResult<decimal> GetBalance() => Ok(_parkingService.GetBalance());
@@ -30,5 +31,4 @@ public class ParkingController: ControllerBase
 
     [HttpGet("fullbalance")]
     public ActionResult<decimal> GetFullBalance() => Ok(_parkingService.GetBalanceFromFile());
-
 }

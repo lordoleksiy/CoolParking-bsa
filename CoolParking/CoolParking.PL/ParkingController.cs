@@ -1,11 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics;
-using System.Reflection;
-using CoolParking.BL.Interfaces;
-using CoolParking.BL.Models;
-using CoolParking.BL.Services;
-using CoolParking.PL.Models;
-using Newtonsoft.Json;
+﻿using CoolParking.BL.Models;
+using CoolParking.WebAPI.Models;
 
 namespace CoolParking.PL;
 
@@ -71,7 +65,7 @@ public class ParkingController
     {
         Console.Write("Enter vehicle id: ");
         var id = Console.ReadLine();
-        var res = client.Get<Vehicle>($"vehicles/{id}");
+        var res = client.Get<VehicleDTO>($"vehicles/{id}");
         Console.WriteLine(res);
     }
 
@@ -83,7 +77,7 @@ public class ParkingController
 
     private void ShowVehicles()
     {
-        var vehicles = client.Get<IEnumerable<Vehicle>>("vehicles");
+        var vehicles = client.Get<IEnumerable<VehicleDTO>>("vehicles");
         if (vehicles == null || !vehicles.Any())
         {
             Console.WriteLine("No vehicles...");
@@ -96,7 +90,7 @@ public class ParkingController
 
     private void AddVehicle()
     {
-        VehicleType type;
+        VehicleTypeDTO type;
         decimal balance;
         Console.Write("Choose type of your vehicle (PassengerCar,\r\n    Truck,\r\n    Bus,\r\n    Motorcycle): ");
         var typestr = Console.ReadLine();
@@ -104,13 +98,13 @@ public class ParkingController
         switch (typestr)
         {
             case "PassengerCar":
-                type = VehicleType.PassengerCar; break;
+                type = VehicleTypeDTO.PassengerCar; break;
             case "Truck":
-                type = VehicleType.Truck; break;
+                type = VehicleTypeDTO.Truck; break;
             case "Bus":
-                type = VehicleType.Bus; break;
+                type = VehicleTypeDTO.Bus; break;
             case "Motorcycle":
-                type = VehicleType.Motorcycle; break;
+                type = VehicleTypeDTO.Motorcycle; break;
             default:
                 Console.WriteLine("No such type of vehicle");
                 return;
@@ -125,7 +119,7 @@ public class ParkingController
             return;
         }
 
-        var vehicle = new Vehicle(Vehicle.GenerateRandomRegistrationPlateNumber(), type, balance);
+        var vehicle = new VehicleDTO(Vehicle.GenerateRandomRegistrationPlateNumber(), type, balance);
         var res = client.Post("vehicles", vehicle);
         Console.Write("Your vehicle: ");
         Console.WriteLine(res);
@@ -144,11 +138,7 @@ public class ParkingController
             Console.WriteLine("Wrong Input!");
             return;
         }
-        var model = new VehicleViewModel()
-        {
-            Id = id,
-            Balance = amount,
-        };
+        var model = new VehicleDTO(id!, null, amount);
    
         var res = client.Put("transactions/topUpVehicle", model);
         Console.WriteLine(res);

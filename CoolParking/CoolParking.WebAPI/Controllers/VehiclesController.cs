@@ -13,9 +13,9 @@ public class VehiclesController: ControllerBase
 {
     private readonly IParkingService _parkingService;
 
-    public VehiclesController()
+    public VehiclesController(IParkingService service)
     {
-        _parkingService = Data.ParkingService;
+        _parkingService = service;
     }
 
     [HttpGet]
@@ -78,5 +78,4 @@ public class VehiclesController: ControllerBase
         }
         return false;
     }
-
 }

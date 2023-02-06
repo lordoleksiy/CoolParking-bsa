@@ -13,9 +13,9 @@ namespace CoolParking.WebAPI.Controllers;
 public class TransactionsController: ControllerBase
 {
     private readonly IParkingService _parkingService;
-    public TransactionsController()
+    public TransactionsController(IParkingService service)
     {
-        _parkingService = Data.ParkingService;
+        _parkingService = service;
     }
 
     [HttpGet("last")]
@@ -40,9 +40,8 @@ public class TransactionsController: ControllerBase
     {
         try
         {
-            var vehicle = new MyAutoMapper<VehicleDTO, Vehicle>().Map(vehicleDTO);
-            _parkingService.TopUpVehicle(vehicle.Id, vehicle.Balance);
-            return Ok(new MyAutoMapper<Vehicle, VehicleDTO>().Map(_parkingService.GetVehicle(vehicle.Id)));
+            _parkingService.TopUpVehicle(vehicleDTO.Id, vehicleDTO.Balance);
+            return Ok(new MyAutoMapper<Vehicle, VehicleDTO>().Map(_parkingService.GetVehicle(vehicleDTO.Id)));
         }
         catch (ValidationException ex)
         {
@@ -53,4 +52,6 @@ public class TransactionsController: ControllerBase
             return NotFound(ex.Message);
         }
     }
+
+
 }

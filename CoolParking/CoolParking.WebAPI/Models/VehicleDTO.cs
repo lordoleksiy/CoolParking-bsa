@@ -3,4 +3,4 @@ using CoolParking.BL.Models;
 
 namespace CoolParking.WebAPI.Models;
 
-public record VehicleDTO(string Id, VehicleTypeDTO VehicleType, decimal Balance){}
+public record class VehicleDTO(string Id, VehicleTypeDTO? VehicleType, decimal Balance){}
