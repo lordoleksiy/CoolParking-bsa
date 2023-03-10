@@ -36,7 +36,7 @@ public class TransactionsController: ControllerBase
     }
 
     [HttpPut("topUpVehicle")]
-    public ActionResult<VehicleDTO> TopUp([FromBody]VehicleDTO vehicleDTO)
+    public ActionResult<VehicleDTO> TopUp([FromBody]TopUpVehicleDTO vehicleDTO)
     {
         try
         {
