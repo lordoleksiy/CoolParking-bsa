@@ -138,7 +138,7 @@ public class ParkingController
             Console.WriteLine("Wrong Input!");
             return;
         }
-        var model = new VehicleDTO(id!, null, amount);
+        var model = new TopUpVehicleDTO(id!, amount);
    
         var res = client.Put("transactions/topUpVehicle", model);
         Console.WriteLine(res);
